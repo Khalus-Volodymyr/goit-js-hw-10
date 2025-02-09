@@ -7,6 +7,9 @@ let userSelectedDate = null;
 let buttonStart = document.querySelector('#js-button-start');
 let inputDate = document.querySelector('#datetime-picker');
 let intervalId = null;
+
+buttonStart.disabled = true;
+
 const options = {
   enableTime: true,
   time_24hr: true,
@@ -14,7 +17,6 @@ const options = {
   minuteIncrement: 1,
   onClose(selectedDates) {
     if (new Date() > selectedDates[0]) {
-      userSelectedDate = selectedDates[0];
       iziToast.error({
         title: 'Error',
         position: 'topRight',
@@ -24,24 +26,35 @@ const options = {
         iconColor: '#fff',
         message: 'Please choose a date in the future',
       });
-      //   window.alert('Please choose a date in the future');
       buttonStart.disabled = true;
+      userSelectedDate = null;
     } else {
+      userSelectedDate = selectedDates[0];
       buttonStart.disabled = false;
     }
   },
 };
 
+flatpickr('#datetime-picker', options);
+
 buttonStart.addEventListener('click', () => {
+  if (!userSelectedDate) return;
+
+  clearInterval(intervalId);
+
   buttonStart.disabled = true;
   inputDate.disabled = true;
+
   intervalId = setInterval(() => {
     let timeDiffMs = userSelectedDate - new Date();
+
     if (timeDiffMs <= 0) {
       clearInterval(intervalId);
       timeDiffMs = 0;
       inputDate.disabled = false;
+      buttonStart.disabled = true;
     }
+
     let timeDiff = convertMs(timeDiffMs);
     document.querySelector('#js-days').textContent = addLeadingZero(
       timeDiff.days
@@ -55,7 +68,6 @@ buttonStart.addEventListener('click', () => {
     document.querySelector('#js-seconds').textContent = addLeadingZero(
       timeDiff.seconds
     );
-    console.log(timeDiffMs);
   }, 1000);
 });
 
@@ -85,5 +97,3 @@ function convertMs(ms) {
 console.log(convertMs(2000)); // {days: 0, hours: 0, minutes: 0, seconds: 2}
 console.log(convertMs(140000)); // {days: 0, hours: 0, minutes: 2, seconds: 20}
 console.log(convertMs(24140000)); // {days: 0, hours: 6 minutes: 42, seconds: 20}
-
-flatpickr('#datetime-picker', options);
